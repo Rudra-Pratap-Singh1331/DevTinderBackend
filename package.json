@@ -1,0 +1,24 @@
+{
+  "name": "devtinderbackend",
+  "version": "1.0.0",
+  "description": "This is the backend of DevTinder",
+  "keywords": [
+    "\"backend\"",
+    "\"nodejs\"",
+    "\"express\"",
+    "\"mongoose\""
+  ],
+  "license": "ISC",
+  "author": "Rudra Pratap Singh",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "mongoose": "^8.17.2",
+    "nodemon": "^3.1.10"
+  }
+}
