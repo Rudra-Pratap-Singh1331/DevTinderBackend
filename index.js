@@ -2,12 +2,67 @@ import { configDotenv } from "dotenv";
 import express from "express"
 import dotenv from "dotenv"
 import connectDB from "./config/dbConfig.js"
+import { User } from "./models/user.js";
 const app = express();
 
 dotenv.config()
 
-app.get('/',(req,res)=>{
-  res.send("hello")
+app.use(express.json())
+
+app.get("/users",async(req,res)=>{
+
+  //FINDING THE DB USER HAVING NAME PROVIDED IN REQ BODY
+  // const users = await User.find({fullName:req.body.fullName})
+
+  //FINDING ALL THE USER
+
+  // const users = await User.find({});
+
+  //finding by mongodb id
+
+  const users = await User.findById({})
+
+  if(users.length==0) return res.send("no user found")
+  res.send(users)
+})
+
+app.delete("/user",async(req,res)=>{
+
+  const deleted = await User.findByIdAndDelete(req.query.userId)
+  res.send(deleted)
+
+})
+
+app.patch("/user/:id/update",async(req,res)=>{
+
+  try{
+
+  const updated = await User.findByIdAndUpdate(req.params.id , req.body , {new : true});
+  
+  res.send(["updates",updated])
+
+  }
+  catch(error){
+
+    res.send(error)
+
+  }
+})
+
+app.post("/signup",async(req,res)=>{
+  
+  try{
+
+    const user = new User(req.body);
+    await user.save();
+    res.status(200).send("User Created Successfully!")
+  
+  }
+  catch(error){
+    
+    res.send("error occured!")
+
+  }
 })
 
 connectDB()
