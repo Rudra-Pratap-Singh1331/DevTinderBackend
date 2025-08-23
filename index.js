@@ -60,7 +60,7 @@ app.post("/signup",async(req,res)=>{
   }
   catch(error){
     
-    res.send("error occured!")
+    res.send(error)
 
   }
 })
