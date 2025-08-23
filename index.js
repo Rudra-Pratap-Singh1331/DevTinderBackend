@@ -37,7 +37,7 @@ app.patch("/user/:id/update",async(req,res)=>{
 
   try{
 
-  const updated = await User.findByIdAndUpdate(req.params.id , req.body , {new : true});
+  const updated = await User.findByIdAndUpdate(req.params.id , req.body , {new : true , runValidators:true});
   
   res.send(["updates",updated])
 
