@@ -4,7 +4,7 @@ import dotenv from "dotenv"
 import connectDB from "./config/dbConfig.js"
 import { User } from "./models/user.js";
 import validator from "validator";
-import mongoSanitize from 'express-mongo-sanitize'
+import bcrypt from "bcrypt" 
 const app = express();
 
 dotenv.config()
@@ -37,13 +37,40 @@ app.delete("/user",async(req,res)=>{
 })
 
 app.patch("/user/:id/update",async(req,res)=>{
+  const fields = ["fullName","mobileNumber","techStack"];
+    try{
+    const isPostAllowed = Object.keys(req.body).every((key)=>fields.includes(key));
 
-  try{
+    const error = [] ;
+    
+    if(!isPostAllowed){
 
-  const updated = await User.findByIdAndUpdate(req.params.id , req.body , {new : true , runValidators:true});
+      return res.send("Extra fields are not allowed!!")
+
+    }
+
+
+    if (Object.keys(req.body).includes("fullName") &&  (!req.body.fullName || req.body.fullName.length < 2)) {
+
+      error.push("Full name must be at least 2 characters long.");
+
+    }
+
+    if (Object.keys(req.body).includes("mobileNumber") && (!validator.isMobilePhone(req.body.mobileNumber))) {
+
+      error.push("Mobile number is invalid.");
+
+    }
+
+    if(error.length>0){
+
+      return res.status(400).json({ errors : error })
+
+    }else{
+      const updated = await User.findByIdAndUpdate(req.params.id , req.body , {new : true , runValidators:true});
   
-  res.send(["updates",updated])
-
+       res.status(200).json({message:"updated",value:updated})
+    }
   }
   catch(error){
 
@@ -53,16 +80,14 @@ app.patch("/user/:id/update",async(req,res)=>{
 })
 
 app.post("/signup",async(req,res)=>{
-  const fields = ["fullName","email","mobileNumber","age","gender","techStack"];
+  const {fullName,email,mobileNumber,age,gender,techStack,password} = req.body;
   try{
-    const isPostAllowed = Object.keys(req.body).every((key)=>fields.includes(key));
 
     const error = [] ;
-    
-    if(!isPostAllowed){
+    const result =  /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(password)
+    if(!result){
 
-      return res.send("Extra fields are not allowed!!")
-
+      error.push("Has minimum 8 characters in length. At least one uppercase English lette. At least one lowercase English letter. At least one digit. At least one special character")
     }
 
     if(!validator.isEmail(req.body.email)){
@@ -95,8 +120,16 @@ app.post("/signup",async(req,res)=>{
 
     }
     else{
-      
-      const user = new User(req.body);
+      const hashPassword = await bcrypt.hash(password,10)
+      const user = new User({
+        fullName,
+        email,
+        mobileNumber,
+        age,
+        gender,
+        techStack,
+        password:hashPassword
+      });
 
       await user.save();
 
