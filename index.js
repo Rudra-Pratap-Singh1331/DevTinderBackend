@@ -3,11 +3,15 @@ import express from "express"
 import dotenv from "dotenv"
 import connectDB from "./config/dbConfig.js"
 import { User } from "./models/user.js";
+import validator from "validator";
+import mongoSanitize from 'express-mongo-sanitize'
 const app = express();
 
 dotenv.config()
 
 app.use(express.json())
+
+app.use(mongoSanitize())
 
 app.get("/users",async(req,res)=>{
 
@@ -50,20 +54,70 @@ app.patch("/user/:id/update",async(req,res)=>{
 })
 
 app.post("/signup",async(req,res)=>{
-  
+  const fields = ["fullName","email","mobileNumber","age","gender","techStack"];
   try{
+    const isPostAllowed = Object.keys(req.body).every((key)=>fields.includes(key));
 
-    const user = new User(req.body);
-    await user.save();
-    res.status(200).send("User Created Successfully!")
-  
+    const error = [] ;
+    
+    if(!isPostAllowed){
+
+      return res.send("Extra fields are not allowed!!")
+
+    }
+
+    if(!validator.isEmail(req.body.email)){
+
+      error.push(`${req.body.email} Incorrect email`)
+
+    }
+
+    if (!req.body.fullName || req.body.fullName.length < 2) {
+
+      error.push("Full name must be at least 2 characters long.");
+
+    }
+
+    if (!validator.isMobilePhone(req.body.mobileNumber)) {
+
+      error.push("Mobile number is invalid.");
+
+    }
+
+    if (!req.body.age || req.body.age < 18) {
+
+      error.push("Age must be 18 or above.");
+
+    }
+
+    if(error.length>0){
+
+      return res.status(400).json({ errors : error })
+
+    }
+    else{
+      
+      const user = new User(req.body);
+
+      await user.save();
+
+      res.status(200).send("User Created Successfully!")
+
+    }
+
   }
   catch(error){
+
     if (error.code === 11000) {
+
       return res.status(400).send("This email is already registered.");
+
     }
+
     res.status(500).send(error.message);
+
   }
+
 })
 
 connectDB()
