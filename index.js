@@ -152,6 +152,17 @@ app.post("/signup",async(req,res)=>{
 
 })
 
+app.post("/login",async (req,res) => {
+  const {email,password} = req.body;
+  const user  = await User.findOne({email})
+  if(!user) return res.send("Invalid Credentials")
+  const value = await bcrypt.compare(password,user.password);
+  if(value) res.send("Login Successfull!") 
+  else{
+    res.send("password invalid")
+  } 
+})
+
 connectDB()
 .then(()=>{
   console.log("DB connected Successfully!")
