@@ -59,9 +59,10 @@ app.post("/signup",async(req,res)=>{
   
   }
   catch(error){
-    
-    res.send(error)
-
+    if (error.code === 11000) {
+      return res.status(400).send("This email is already registered.");
+    }
+    res.status(500).send(error.message);
   }
 })
 

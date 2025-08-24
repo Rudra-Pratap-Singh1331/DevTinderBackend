@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
       message: ({value})=> `${value} is not a valid email` 
     },
     required:true,
+    trim:true,
   },
   mobileNumber:{
     type:String,
@@ -32,12 +33,16 @@ const userSchema = new mongoose.Schema({
   },
   gender:{
     type:String,
-    enum: {value:["Male","Female","Others"],message:"error"}
+    enum: {values:["Male","Female","Others"],message:"error"}
   },
   techStack:{
     type:String
   }
+},
+{
+  timestamps:true
+}
 
-})
+)
 
 export const User = mongoose.model("User",userSchema);
