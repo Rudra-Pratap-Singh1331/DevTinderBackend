@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-
+import validator from 'validator'
 const userSchema = new mongoose.Schema({
 
   fullName:{
     type:String,
     required:true,
     set : (value) => value? validator.escape(value):value,
-    maxLength : [30,"Max length is 30"],
+    maxLength : [60,"Max length is 30"],
     minLength : [2,"Minimum length is 2"],
    
   },

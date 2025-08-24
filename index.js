@@ -11,7 +11,6 @@ dotenv.config()
 
 app.use(express.json())
 
-app.use(mongoSanitize())
 
 app.get("/users",async(req,res)=>{
 
