@@ -67,7 +67,7 @@ app.patch("/user/:id/update",async(req,res)=>{
       return res.status(400).json({ errors : error })
 
     }else{
-      const updated = await User.findByIdAndUpdate(req.params.id , req.body , {new : true , runValidators:true});
+      const updated = await User.findByIdAndUpdate(req.params.id , req.body , {new : true , runValidators:true}); //new true means return the updated doc
   
        res.status(200).json({message:"updated",value:updated})
     }
@@ -89,34 +89,34 @@ app.post("/signup",async(req,res)=>{
 
       error.push("Has minimum 8 characters in length. At least one uppercase English lette. At least one lowercase English letter. At least one digit. At least one special character")
     }
-
+    // if(!email) throw new Error("Email required");
     if(!validator.isEmail(req.body.email)){
 
-      error.push(`${req.body.email} Incorrect email`)
+      error.push({field : "Email", message:`${req.body.email} Incorrect email`})
 
     }
 
     if (!req.body.fullName || req.body.fullName.length < 2) {
 
-      error.push("Full name must be at least 2 characters long.");
+      error.push({field:"Fullname",message:"Full name must be at least 2 characters long."});
 
     }
 
     if (!validator.isMobilePhone(req.body.mobileNumber)) {
 
-      error.push("Mobile number is invalid.");
+      error.push({field:"Mobile Number" , message:"Mobile number is invalid."});
 
     }
 
     if (!req.body.age || req.body.age < 18) {
 
-      error.push("Age must be 18 or above.");
+      error.push({field:"Age",message:"Age must be 18 or above."});
 
     }
 
     if(error.length>0){
 
-      return res.status(400).json({ errors : error })
+      return res.status(400).json({ error });
 
     }
     else{
@@ -136,8 +136,8 @@ app.post("/signup",async(req,res)=>{
       res.status(200).send("User Created Successfully!")
 
     }
-
   }
+  
   catch(error){
 
     if (error.code === 11000) {
@@ -145,8 +145,11 @@ app.post("/signup",async(req,res)=>{
       return res.status(400).send("This email is already registered.");
 
     }
+    if(error.name == "ValidationError"){
+      return res.status(500).json(error)
+    }
 
-    res.status(500).send(error.message);
+    res.status(500).json({error})
 
   }
 
@@ -157,7 +160,9 @@ app.post("/login",async (req,res) => {
   const user  = await User.findOne({email})
   if(!user) return res.send("Invalid Credentials")
   const value = await bcrypt.compare(password,user.password);
-  if(value) res.send("Login Successfull!") 
+  if(value){ 
+    res.cookie("token" , "shjdkjahikahfkjashf2qiu3h28u72h4k2j43oihfztq3t9073496tkv23jgfur72382y7982y5")
+    res.send("Login Successfull!") }
   else{
     res.send("password invalid")
   } 
@@ -173,7 +178,7 @@ connectDB()
 
 })
 }).catch((error)=>{
-  console.log(error.message)
+  console.log(error)
 })
 
 

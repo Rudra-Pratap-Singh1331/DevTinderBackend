@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
       message: ({value})=> `${value} is not a valid email` 
     },
     required:true,
-    trim:true,
+    trim:true, // remove spaces white 
   },
   password:{
     type:String,
