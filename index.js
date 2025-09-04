@@ -1,20 +1,24 @@
-import { configDotenv } from "dotenv";
 import express from "express"
 import dotenv from "dotenv"
 import connectDB from "./config/dbConfig.js"
-import { User } from "./models/user.js";
-import validator from "validator";
-import bcrypt from "bcrypt" 
+import { User } from "./models/user.js"; 
 import cookieParser from "cookie-parser";
-import jwt from "jsonwebtoken";
+import authRouter from "./routes/authRoute.js";
+import userRouter from "./routes/userRoute.js";
 const app = express();
 
 dotenv.config()
 
 app.use(express.json())
+
 app.use(cookieParser())
 
+app.use("/",authRouter);
 
+app.use("/user",userRouter);
+
+
+//feed of user that fetches all the user for the homepage of the user currently logged in !!
 app.get("/users",async(req,res)=>{
 
   //FINDING THE DB USER HAVING NAME PROVIDED IN REQ BODY
@@ -31,176 +35,10 @@ app.get("/users",async(req,res)=>{
   if(users.length==0) return res.send("no user found")
   res.send(users)
 })
-app.get("/profile", async(req,res)=>{
-
-  try{
-
-    const {token} = req.cookies;
-    const validToken = jwt.verify(token , process.env.JWT_SECRET_KEY);
-    res.send("se i can access profile")
-
-  }catch(error){
-    res.json(error)
-  }
-
-})
-app.delete("/user",async(req,res)=>{
-  try{
-      const cookie = req.cookies
-      const validToken = jwt.verify(cookie.token , process.env.JWT_SECRET_KEY); //if valid return the payload object if error flow directs to cache block;
-      console.log(validToken)
-      const userExist = await User.findOne({_id:validToken.id});
-      if(!userExist) return res.json({
-        success:false,
-        message:"user does not exist!"
-      })
-      const deleted = await User.findByIdAndDelete(validToken.id)
-      res.send(deleted)
-  }catch(error)
-  {
-      res.json(error.message)
-  }
-})
-
-app.patch("/user/update",async(req,res)=>{
-  const fields = ["id","fullName","mobileNumber","techStack"];
-    try{
-    const isPostAllowed = Object.keys(req.body).every((key)=>fields.includes(key));
-
-    const error = [] ;
-    
-    if(!isPostAllowed){
-
-      return res.send("Extra fields are not allowed!!")
-
-    }
 
 
-    if (Object.keys(req.body).includes("fullName") &&  (!req.body.fullName || req.body.fullName.length < 2)) {
 
-      error.push("Full name must be at least 2 characters long.");
 
-    }
-
-    if (Object.keys(req.body).includes("mobileNumber") && (!validator.isMobilePhone(req.body.mobileNumber))) {
-
-      error.push("Mobile number is invalid.");
-
-    }
-
-    if(error.length>0){
-
-      return res.status(400).json({ errors : error })
-
-    }else{
-      const updated = await User.findByIdAndUpdate(req.body.id , req.body , {new : true , runValidators:true}); //new true means return the updated doc
-  
-       res.status(200).json({message:"updated",value:updated})
-    }
-  }
-  catch(error){
-
-    res.send(error)
-
-  }
-})
-
-app.post("/signup",async(req,res)=>{
-  const {fullName,email,mobileNumber,age,gender,techStack,password} = req.body;
-  try{
-
-    const error = [] ;
-    const result =  /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(password)
-    if(!result){
-
-      error.push("Has minimum 8 characters in length. At least one uppercase English lette. At least one lowercase English letter. At least one digit. At least one special character")
-    }
-    // if(!email) throw new Error("Email required");
-    if(!validator.isEmail(req.body.email)){
-
-      error.push({field : "Email", message:`${req.body.email} Incorrect email`})
-
-    }
-
-    if (!req.body.fullName || req.body.fullName.length < 2) {
-
-      error.push({field:"Fullname",message:"Full name must be at least 2 characters long."});
-
-    }
-
-    if (!validator.isMobilePhone(req.body.mobileNumber)) {
-
-      error.push({field:"Mobile Number" , message:"Mobile number is invalid."});
-
-    }
-
-    if (!req.body.age || req.body.age < 18) {
-
-      error.push({field:"Age",message:"Age must be 18 or above."});
-
-    }
-
-    if(error.length>0){
-
-      return res.status(400).json({ error });
-
-    }
-    else{
-      const hashPassword = await bcrypt.hash(password,10)
-      const user = new User({
-        fullName,
-        email,
-        mobileNumber,
-        age,
-        gender,
-        techStack,
-        password:hashPassword
-      });
-
-      await user.save();
-      res.status(200).send("User Created Successfully!")
-
-    }
-  }
-  
-  catch(error){
-
-    if (error.code === 11000) {
-
-      return res.status(400).send("This email is already registered.");
-
-    }
-    if(error.name == "ValidationError"){
-      return res.status(500).json(error)
-    }
-
-    res.status(500).json({error})
-
-  }
-
-})
-
-app.post("/login",async (req,res) => {
-  try{
-  const {email,password} = req.body;
-  const user  = await User.findOne({email})
-  if(!user) return res.send("Invalid Credentials")
-  const value = await bcrypt.compare(password,user.password);
-  if(value){ 
-    //jwt 
-
-    const authToken = jwt.sign({id:user._id},process.env.JWT_SECRET_KEY);
-
-    res.cookie("token",authToken)
-    res.send("Login Successfull!") }
-  else{
-    res.send("password invalid")
-  } 
-  }catch(error)
-  {
-    res.send(404).json({error})
-  }
-})
 
 connectDB()
 .then(()=>{
