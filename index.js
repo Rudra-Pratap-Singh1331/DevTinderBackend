@@ -5,11 +5,14 @@ import connectDB from "./config/dbConfig.js"
 import { User } from "./models/user.js";
 import validator from "validator";
 import bcrypt from "bcrypt" 
+import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
 const app = express();
 
 dotenv.config()
 
 app.use(express.json())
+app.use(cookieParser())
 
 
 app.get("/users",async(req,res)=>{
@@ -28,16 +31,39 @@ app.get("/users",async(req,res)=>{
   if(users.length==0) return res.send("no user found")
   res.send(users)
 })
+app.get("/profile", async(req,res)=>{
 
-app.delete("/user",async(req,res)=>{
+  try{
 
-  const deleted = await User.findByIdAndDelete(req.query.userId)
-  res.send(deleted)
+    const {token} = req.cookies;
+    const validToken = jwt.verify(token , process.env.JWT_SECRET_KEY);
+    res.send("se i can access profile")
+
+  }catch(error){
+    res.json(error)
+  }
 
 })
+app.delete("/user",async(req,res)=>{
+  try{
+      const cookie = req.cookies
+      const validToken = jwt.verify(cookie.token , process.env.JWT_SECRET_KEY); //if valid return the payload object if error flow directs to cache block;
+      console.log(validToken)
+      const userExist = await User.findOne({_id:validToken.id});
+      if(!userExist) return res.json({
+        success:false,
+        message:"user does not exist!"
+      })
+      const deleted = await User.findByIdAndDelete(validToken.id)
+      res.send(deleted)
+  }catch(error)
+  {
+      res.json(error.message)
+  }
+})
 
-app.patch("/user/:id/update",async(req,res)=>{
-  const fields = ["fullName","mobileNumber","techStack"];
+app.patch("/user/update",async(req,res)=>{
+  const fields = ["id","fullName","mobileNumber","techStack"];
     try{
     const isPostAllowed = Object.keys(req.body).every((key)=>fields.includes(key));
 
@@ -67,7 +93,7 @@ app.patch("/user/:id/update",async(req,res)=>{
       return res.status(400).json({ errors : error })
 
     }else{
-      const updated = await User.findByIdAndUpdate(req.params.id , req.body , {new : true , runValidators:true}); //new true means return the updated doc
+      const updated = await User.findByIdAndUpdate(req.body.id , req.body , {new : true , runValidators:true}); //new true means return the updated doc
   
        res.status(200).json({message:"updated",value:updated})
     }
@@ -132,7 +158,6 @@ app.post("/signup",async(req,res)=>{
       });
 
       await user.save();
-
       res.status(200).send("User Created Successfully!")
 
     }
@@ -156,16 +181,25 @@ app.post("/signup",async(req,res)=>{
 })
 
 app.post("/login",async (req,res) => {
+  try{
   const {email,password} = req.body;
   const user  = await User.findOne({email})
   if(!user) return res.send("Invalid Credentials")
   const value = await bcrypt.compare(password,user.password);
   if(value){ 
-    res.cookie("token" , "shjdkjahikahfkjashf2qiu3h28u72h4k2j43oihfztq3t9073496tkv23jgfur72382y7982y5")
+    //jwt 
+
+    const authToken = jwt.sign({id:user._id},process.env.JWT_SECRET_KEY);
+
+    res.cookie("token",authToken)
     res.send("Login Successfull!") }
   else{
     res.send("password invalid")
   } 
+  }catch(error)
+  {
+    res.send(404).json({error})
+  }
 })
 
 connectDB()
