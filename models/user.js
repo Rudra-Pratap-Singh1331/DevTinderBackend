@@ -43,7 +43,10 @@ const userSchema = new mongoose.Schema({
   gender:{
     type:String,
     set : (value) => value ? validator.escape(value):value,
-    enum: {values:["Male","Female","Others"],message:"error"}
+    enum: {
+      values:["Male","Female","Others"],
+      message:`{VALUE} is not supported!`
+    }
   },
   techStack:{
     type: [String],
@@ -56,4 +59,4 @@ const userSchema = new mongoose.Schema({
 
 )
 
-export const User = mongoose.model("User",userSchema);
+export const User =new  mongoose.model("User",userSchema);

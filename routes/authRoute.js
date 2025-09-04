@@ -1,5 +1,5 @@
 import express from 'express' 
-import { User } from "./models/user.js";
+import { User } from '../models/user.js';
 import validator from "validator";
 import bcrypt from "bcrypt" 
 import jwt from "jsonwebtoken";

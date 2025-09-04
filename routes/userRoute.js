@@ -1,5 +1,5 @@
 import express from "express"
-import { User } from "./models/user.js";
+import { User } from "../models/user.js";
 import validator from "validator";
 import jwt from "jsonwebtoken";
 
@@ -9,7 +9,7 @@ const app = express();
 const userRouter = express.Router();
 
 
-userRouter.get("/user/profile", async(req,res)=>{
+userRouter.get("/profile", async(req,res)=>{
 
   try{
 
@@ -27,7 +27,7 @@ userRouter.get("/user/profile", async(req,res)=>{
   }
 
 })
-userRouter.delete("/user/delete",async(req,res)=>{
+userRouter.delete("/delete",async(req,res)=>{
   try{
       const cookie = req.cookies
       const validToken = jwt.verify(cookie.token , process.env.JWT_SECRET_KEY); //if valid return the payload object if error flow directs to cache block;
@@ -44,11 +44,11 @@ userRouter.delete("/user/delete",async(req,res)=>{
       res.send(deleted)
   }catch(error)
   {
-      res.json(error.message)
+      res.json({error:message})
   }
 })
 
-userRouter.patch("/user/profile/update",async(req,res)=>{
+userRouter.patch("/profile/update",async(req,res)=>{
   const fields = ["id","fullName","mobileNumber","techStack"];
     try{
     const isPostAllowed = Object.keys(req.body).every((key)=>fields.includes(key));
