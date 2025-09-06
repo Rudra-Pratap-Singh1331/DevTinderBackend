@@ -106,7 +106,7 @@ connectionRouter.post("/request/review/:typeOfReq/:objId", userAuthMiddleware , 
     res.status(200).json({
       status:true,
       messsage:`Request ${req.params.typeOfReq}`,
-      data:connectionReq,
+      data:result,
     })
 
   }

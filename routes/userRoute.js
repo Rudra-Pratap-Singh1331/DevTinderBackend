@@ -2,6 +2,7 @@ import express from "express"
 import { User } from "../models/user.js";
 import validator from "validator";
 import userAuthMiddleware from "../middlewares/userAuthMiddleware.js";
+import { ConnectionRequestModel } from "../models/connectionRequest.js";
 
 
 const app = express();
@@ -24,6 +25,7 @@ userRouter.get("/profile", userAuthMiddleware,async(req,res)=>{
   }
 
 })
+
 userRouter.delete("/delete", userAuthMiddleware, async (req, res) => {
   try {
     const loggedInUser = req.user;
@@ -49,6 +51,7 @@ userRouter.delete("/delete", userAuthMiddleware, async (req, res) => {
     });
   }
 });
+
 userRouter.patch("/profile/update",userAuthMiddleware,async(req,res)=>{
   const fields = ["fullName","mobileNumber","techStack"];
     try{
@@ -92,5 +95,66 @@ userRouter.patch("/profile/update",userAuthMiddleware,async(req,res)=>{
   }
 })
 
+userRouter.get("/connections",userAuthMiddleware,async (req,res)=>{
+
+  try {
+    const loggedInUserConnections = await ConnectionRequestModel.find({               //if no user empty array []  is returned 
+    $or:[
+      {
+        toUserId : req.user._id,
+        status: "Accepted"
+      },
+      {
+        fromUserId:req.user._id,
+        status:"Accepted",
+      } 
+    ]
+  }).populate("fromUserId" , ["fullName","age","gender","techStack"]).populate("toUserId",["fullName","age","gender","techStack"])
+
+  const data = loggedInUserConnections.map((users)=>{
+    if(users.fromUserId._id.toString()===req.user._id.toString()) return users.toUserId;
+    return users.fromUserId
+  })
+
+  res.status(200).json({
+    status:true,
+    data: data
+  })
+  } catch (error) {
+    
+    res.status(500).json({
+      status:false,
+      error:{
+        message: error.message
+      }
+    })
+
+  }
+
+})
+
+userRouter.get("/connections/requests",userAuthMiddleware, async (req,res) => {
+
+  try {
+    const requestsPending = await ConnectionRequestModel.find({
+      toUserId:req.user._id,
+      status:"Interested",
+    }).populate("fromUserId",["fullName","age","gender","techStack"]);
+
+    const data = requestsPending.map((users)=> users.fromUserId)
+
+    return res.status(200).json({
+      status:true,
+      data:data,
+    })
+
+  } catch (error) {
+    return res.status(500).json({
+      status:false,
+      message: "error:" + error.message,
+    })
+  }
+
+})
 
 export default userRouter;
