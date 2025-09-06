@@ -2,6 +2,7 @@ import express from "express"
 import { User } from "../models/user.js";
 import validator from "validator";
 import jwt from "jsonwebtoken";
+import userAuthMiddleware from "../middlewares/userAuthMiddleware.js";
 
 
 const app = express();
@@ -9,12 +10,9 @@ const app = express();
 const userRouter = express.Router();
 
 
-userRouter.get("/profile", async(req,res)=>{
+userRouter.get("/profile", userAuthMiddleware,async(req,res)=>{
 
   try{
-
-    const {token} = req.cookies;
-    const validToken = jwt.verify(token , process.env.JWT_SECRET_KEY);
     res.json(
       {
         status:true,
@@ -27,29 +25,33 @@ userRouter.get("/profile", async(req,res)=>{
   }
 
 })
-userRouter.delete("/delete",async(req,res)=>{
-  try{
-      const cookie = req.cookies
-      const validToken = jwt.verify(cookie.token , process.env.JWT_SECRET_KEY); //if valid return the payload object if error flow directs to cache block;
-      console.log(validToken)
-      const userExist = await User.findOne({_id:validToken.id});
-      if(!userExist) return res.json({
-        success:false,
-        message:"user does not exist!"
-      })
-      const deleted = await User.findByIdAndDelete(validToken.id)
-      res.cookie("token" , null , {
-        expires:new Date(Date.now()),
-      })
-      res.send(deleted)
-  }catch(error)
-  {
-      res.json({error:message})
+userRouter.delete("/delete", userAuthMiddleware, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+    const deleted = await User.findByIdAndDelete(loggedInUser._id);
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+    res.cookie("token" , null , {
+      expires:new Date(Date.now()),
+    })
+    
+    return res.status(200).json({
+      success: true,
+      message: "Account deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
-})
-
-userRouter.patch("/profile/update",async(req,res)=>{
-  const fields = ["id","fullName","mobileNumber","techStack"];
+});
+userRouter.patch("/profile/update",userAuthMiddleware,async(req,res)=>{
+  const fields = ["fullName","mobileNumber","techStack"];
     try{
     const isPostAllowed = Object.keys(req.body).every((key)=>fields.includes(key));
 
