@@ -1,7 +1,6 @@
 import express from "express"
 import { User } from "../models/user.js";
 import validator from "validator";
-import jwt from "jsonwebtoken";
 import userAuthMiddleware from "../middlewares/userAuthMiddleware.js";
 
 

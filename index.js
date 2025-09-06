@@ -5,6 +5,7 @@ import { User } from "./models/user.js";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/authRoute.js";
 import userRouter from "./routes/userRoute.js";
+import connectionRouter from "./routes/connection.js";
 const app = express();
 
 dotenv.config()
@@ -17,6 +18,7 @@ app.use("/",authRouter);
 
 app.use("/user",userRouter);
 
+app.use("/connection",connectionRouter)
 
 //feed of user that fetches all the user for the homepage of the user currently logged in !!
 app.get("/users",async(req,res)=>{
