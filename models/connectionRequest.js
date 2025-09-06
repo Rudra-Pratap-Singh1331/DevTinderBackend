@@ -23,19 +23,19 @@ const connectionRequestSchema = new mongoose.Schema({
 }
 )
 
-connectionRequestSchema.pre("save", async function () {
+// connectionRequestSchema.pre("save", async function () {
 
-  const connectionObject = this;
+//   const connectionObject = this;
 
-  const ReqExist = await ConnectionRequestModel.findOne({
-    $or:[ 
-      {fromUserId :connectionObject.fromUserId ,toUserId : connectionObject.toUserId} , {
-      fromUserId : connectionObject.toUserId ,toUserId : connectionObject.fromUserId
-      }
-    ]
-})
-if(ReqExist) throw new Error("Connection Request Already Exist!")
+//   const ReqExist = await ConnectionRequestModel.findOne({
+//     $or:[ 
+//       {fromUserId :connectionObject.fromUserId ,toUserId : connectionObject.toUserId} , {
+//       fromUserId : connectionObject.toUserId ,toUserId : connectionObject.fromUserId
+//       }
+//     ]
+// })
+// if(ReqExist) throw new Error("Connection Request Already Exist!")
 
-})
+// })
 
 export const ConnectionRequestModel = mongoose.model("ConnectionRequest", connectionRequestSchema);

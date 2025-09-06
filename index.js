@@ -32,10 +32,15 @@ app.get("/users",async(req,res)=>{
 
   //finding by mongodb id
 
-  const users = await User.findById({})
+  // const users = await User.findById({})
 
-  if(users.length==0) return res.send("no user found")
-  res.send(users)
+  // if(users.length==0) return res.send("no user found")
+  // res.send(users)
+
+  const users = await User.find({});
+  res.send(users);
+
+
 })
 
 
