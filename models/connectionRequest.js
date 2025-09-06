@@ -11,10 +11,11 @@ const connectionRequestSchema = new mongoose.Schema({
     required:true,
   },
   status:{
+    required:true,
+    type:String,
     enum:{
-      values : ["Pending" , "Accepted" , "Rejected" , "blocked"],
-      message : `{VALUE} is not supported!`,
-    }
+      values : ["Ignored" , "Interested" , "Accepted" , "Rejected"],
+    },
   }
 },
 {
@@ -22,4 +23,19 @@ const connectionRequestSchema = new mongoose.Schema({
 }
 )
 
-export default ConnectionRequestModel = new mongoose.model("ConntectionRequest" , connectionRequestSchema);
+connectionRequestSchema.pre("save", async function () {
+
+  const connectionObject = this;
+
+  const ReqExist = await ConnectionRequestModel.findOne({
+    $or:[ 
+      {fromUserId :connectionObject.fromUserId ,toUserId : connectionObject.toUserId} , {
+      fromUserId : connectionObject.toUserId ,toUserId : connectionObject.fromUserId
+      }
+    ]
+})
+if(ReqExist) throw new Error("Connection Request Already Exist!")
+
+})
+
+export const ConnectionRequestModel = mongoose.model("ConnectionRequest", connectionRequestSchema);
