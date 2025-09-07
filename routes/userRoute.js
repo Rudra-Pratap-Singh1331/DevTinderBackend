@@ -157,4 +157,57 @@ userRouter.get("/connections/requests",userAuthMiddleware, async (req,res) => {
 
 })
 
+userRouter.get("/feed",userAuthMiddleware,async (req,res)=>{
+
+  //finding all the connection that we dont want to show in the user feed
+
+  const page = parseInt(req.query.page) || 1;
+  let limit = parseInt(req.query.limit) || 10;
+  const skip = (page-1)*limit;
+
+  // sanitizing limit
+
+  limit = limit>20 ? 10 : limit;
+
+  const existingConnectionUser = await ConnectionRequestModel.find({
+    $or:[
+      {toUserId:req.user._id},{
+        fromUserId:req.user._id
+      }
+    ]
+  }).select("fromUserId toUserId");
+
+  //now here we have to make very if condition for getting unique id because in some document we may the sender or in some we may the reciever
+
+  const userNotToBeShowOnTheFeed = new Set();
+
+  //pushing th eexistingConnectionUser in the set
+
+  existingConnectionUser.forEach((users)=>{
+    userNotToBeShowOnTheFeed.add(users.fromUserId);
+    userNotToBeShowOnTheFeed.add(users.toUserId);
+  })
+
+  //finding the rest of the remaining users
+
+  const UsersToBeShowOnTheFeed = await User.find(
+   {
+    $and:[
+      {
+        _id : { $nin : Array.from(userNotToBeShowOnTheFeed) },    //conver the Set into Array
+      },
+      {
+        _id: { $ne : req.user._id }
+      }
+    ]
+   }
+  ).select("fullName age techStack gender").skip(skip).limit(limit)
+
+  res.status(200).json({
+    status:true,
+    data: UsersToBeShowOnTheFeed
+  })
+
+})
+
 export default userRouter;
