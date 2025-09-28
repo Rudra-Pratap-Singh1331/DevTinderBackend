@@ -149,8 +149,7 @@ userRouter.get("/connections", userAuthMiddleware, async (req, res) => {
   }
 });
 
-userRouter.get(
-  "/connections/requests",
+userRouter.get("/connections/requests",
   userAuthMiddleware,
   async (req, res) => {
     try {
@@ -225,6 +224,43 @@ userRouter.get("/feed", userAuthMiddleware, async (req, res) => {
     status: true,
     UsersToBeShowOnTheFeed,
   });
+});
+
+userRouter.get("/friends", userAuthMiddleware, async (req, res) => {
+  try {
+    const friends = await ConnectionRequestModel.find({
+      $or: [
+        {
+          fromUserId: req.user._id,
+        },
+        {
+          toUserId: req.user._id,
+        },
+      ],
+      status: "Accepted",
+    });
+
+    //FETCHING ONLY THE PERSON WHO HAVE SEND ME OR I HAVE SEND AND THE STATUS IS ACCEPTED
+    const friendsListFinal = friends.map((f) => {
+      return f.fromUserId.toString() === req.user._id.toString()
+        ? f.toUserId
+        : f.fromUserId;
+    });
+
+    const friendsConnection = await User.find({
+      _id: { $in: friendsListFinal }, //syntax : $in:[]  here the friendsListFinal is a array and mongo db find all the user having id present in array one by one so we will get a array of user to whom we are freinds
+    }).select("fullName photoUrl");
+
+    res.status(200).json({
+      success: true,
+      friends: friendsConnection,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error,
+    });
+  }
 });
 
 export default userRouter;

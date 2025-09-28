@@ -7,6 +7,8 @@ import authRouter from "./routes/authRoute.js";
 import userRouter from "./routes/userRoute.js";
 import connectionRouter from "./routes/connection.js";
 import cors from "cors";
+import http, { createServer } from "http";
+import { Server } from "socket.io";
 const app = express();
 
 dotenv.config();
@@ -48,10 +50,22 @@ app.get("/users", async (req, res) => {
   res.send(users);
 });
 
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173", // your frontend origin
+  },
+});
+
+io.on("connection", (socket) => { 
+  //handle events here
+})
+
 connectDB()
   .then(() => {
     console.log("DB connected Successfully!");
-    app.listen(process.env.PORT, () => {
+    server.listen(process.env.PORT, () => {
       console.log("server is running!!");
       //we are doing this because we are not using cjs but if we use cjs we can call the connectDB function insed the configDB and reuire the module above like require("./config/dbConfig") we have already studeied that NodeJS wrap each module into IIFE and will execute the moment the reuire will be readed the fucntion will get execute and db will get connected
     });
