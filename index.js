@@ -7,8 +7,8 @@ import authRouter from "./routes/authRoute.js";
 import userRouter from "./routes/userRoute.js";
 import connectionRouter from "./routes/connection.js";
 import cors from "cors";
-import http, { createServer } from "http";
-import { Server } from "socket.io";
+import socketConnection from "./utils/socketConnection.js";
+import http from "http";
 const app = express();
 
 dotenv.config();
@@ -51,17 +51,7 @@ app.get("/users", async (req, res) => {
 });
 
 const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:5173", // your frontend origin
-  },
-});
-
-io.on("connection", (socket) => { 
-  //handle events here
-})
-
+socketConnection(server);
 connectDB()
   .then(() => {
     console.log("DB connected Successfully!");

@@ -3,7 +3,8 @@ import { User } from "../models/user.js";
 import validator from "validator";
 import userAuthMiddleware from "../middlewares/userAuthMiddleware.js";
 import { ConnectionRequestModel } from "../models/connectionRequest.js";
-
+import upload from "../config/multerConfig.js";
+import { Post } from "../models/postModel.js";
 const app = express();
 
 const userRouter = express.Router();
@@ -149,7 +150,8 @@ userRouter.get("/connections", userAuthMiddleware, async (req, res) => {
   }
 });
 
-userRouter.get("/connections/requests",
+userRouter.get(
+  "/connections/requests",
   userAuthMiddleware,
   async (req, res) => {
     try {
@@ -262,5 +264,42 @@ userRouter.get("/friends", userAuthMiddleware, async (req, res) => {
     });
   }
 });
+
+userRouter.post(
+  "/createPost",
+  userAuthMiddleware,
+  upload.single("postPhotoUrl"),
+  async (req, res) => {
+    try {
+      const { _id } = req.user;
+      const { postContent, postVisibility } = req.body;
+      let photoUrlCloudinary = "";
+      //file upload to cloudinary and get the url
+      if (req.file) {
+        const result = await uploadToCloudinary(req.file.buffer, "");
+        photoUrlCloudinary = result.secure_url;
+      }
+
+      //now add it to post schema
+      const postData = new Post({
+        userId: _id,
+        postPhotoUrl: photoUrlCloudinary,
+        postContent,
+        postVisibility,
+      });
+
+      await postData.save();
+
+      res.status(200).json({
+        success: true,
+        message: "Post Created!",
+      });
+    } catch (error) {
+      res
+        .status(500)
+        .json({ success: false, message: "Failed to create post" });
+    }
+  }
+);
 
 export default userRouter;
