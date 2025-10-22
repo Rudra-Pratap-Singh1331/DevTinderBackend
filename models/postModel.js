@@ -11,6 +11,14 @@ const postSchema = new mongoose.Schema(
     postPhotoUrl: {
       type: String, // Cloudinary URL
     },
+    likesCount: {
+      type: Number,
+      default: 0,
+    },
+    commentCount: {
+      type: Number,
+      default: 0,
+    },
     postContent: {
       type: String,
       required: true,
@@ -27,4 +35,5 @@ const postSchema = new mongoose.Schema(
   }
 );
 
-export const Post = mongoose.model("Post", postSchema);
+const Post = mongoose.model("Post", postSchema);
+export default Post;

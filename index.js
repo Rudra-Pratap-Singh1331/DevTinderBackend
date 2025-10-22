@@ -9,6 +9,7 @@ import connectionRouter from "./routes/connection.js";
 import cors from "cors";
 import socketConnection from "./utils/socketConnection.js";
 import http from "http";
+import postRouter from "./routes/postRoute.js";
 const app = express();
 
 dotenv.config();
@@ -29,6 +30,8 @@ app.use("/", authRouter);
 app.use("/user", userRouter);
 
 app.use("/connection", connectionRouter);
+
+app.use("/posts", postRouter);
 
 //feed of user that fetches all the user for the homepage of the user currently logged in !!
 app.get("/users", async (req, res) => {
