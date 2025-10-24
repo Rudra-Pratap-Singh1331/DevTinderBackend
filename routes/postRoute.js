@@ -4,6 +4,7 @@ import { uploadToCloudinary } from "../Cloudinary/cloudinaryConfig.js";
 import upload from "../config/multerConfig.js";
 import Post from "../models/postModel.js";
 import PostLike from "../models/PostLikeModel.js";
+import Comment from "../models/CommentModel.js";
 const app = express();
 const postRouter = express.Router();
 
@@ -77,6 +78,7 @@ postRouter.get("/", userAuthMiddleware, async (req, res) => {
   }
 });
 
+//like/unlike status
 postRouter.post("/reactions", userAuthMiddleware, async (req, res) => {
   const postId = req.body._id;
   const userId = req.user._id;
@@ -108,6 +110,52 @@ postRouter.post("/reactions", userAuthMiddleware, async (req, res) => {
     res.status(500).json({
       status: false,
       error: error,
+    });
+  }
+});
+
+//fetch all the comments
+postRouter.get("/:postId/comments", userAuthMiddleware, async (req, res) => {
+  const { postId } = req.params;
+  try {
+    const commments = await Comment.find({ postId }).populate("userId", [
+      "fullName",
+      "photoUrl",
+      "designation",
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: commments,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      data: error,
+    });
+  }
+});
+
+postRouter.post("/addcomment", userAuthMiddleware, async (req, res) => {
+  const { postId, commentData } = req.body;
+  const userId = req.user._id;
+  console.log(postId, commentData);
+  try {
+    if (commentData === "") throw new Error("Inavlid Comment!");
+    const newComment = new Comment({
+      postId,
+      userId,
+      commentData,
+    });
+    await newComment.save();
+    res.status(201).json({
+      succes: true,
+      message: "Comment Added!",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      data: error.message,
     });
   }
 });
