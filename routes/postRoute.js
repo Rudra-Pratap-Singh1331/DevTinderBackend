@@ -139,7 +139,6 @@ postRouter.get("/:postId/comments", userAuthMiddleware, async (req, res) => {
 postRouter.post("/addcomment", userAuthMiddleware, async (req, res) => {
   const { postId, commentData } = req.body;
   const userId = req.user._id;
-  console.log(postId, commentData);
   try {
     if (commentData === "") throw new Error("Inavlid Comment!");
     const newComment = new Comment({

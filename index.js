@@ -10,6 +10,7 @@ import cors from "cors";
 import socketConnection from "./utils/socketConnection.js";
 import http from "http";
 import postRouter from "./routes/postRoute.js";
+import chatRouter from "./routes/chatRoute.js";
 const app = express();
 
 dotenv.config();
@@ -32,6 +33,8 @@ app.use("/user", userRouter);
 app.use("/connection", connectionRouter);
 
 app.use("/posts", postRouter);
+
+app.use("/chat", chatRouter);
 
 //feed of user that fetches all the user for the homepage of the user currently logged in !!
 app.get("/users", async (req, res) => {
